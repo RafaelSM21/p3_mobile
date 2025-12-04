@@ -170,23 +170,3 @@ npm test
 ```
 
 -----
-
-\<p align="center"\>
-Desenvolvido com 💙 e TypeScript
-\</p\>
-
-```
-
-### O que foi melhorado:
-
-1.  **Cabeçalho Visual:** Adicionei um título claro e os "badges" (escudos coloridos) das tecnologias. Isso dá credibilidade imediata ao repositório.
-2.  **Tabelas Formatadas:** Transformei as listas de recursos e endpoints em tabelas Markdown reais, o que facilita muito a leitura rápida.
-3.  **Blocos de Código:** Usei a sintaxe correta (` typescript,  `bash, ` env,  `prisma) para que o código fique colorido e legível no GitHub/GitLab.
-4.  **Diagrama Mental:** Adicionei um *placeholder* estratégico para o Strategy Pattern. Como o conceito é abstrato, ver onde ele se encaixa visualmente ajuda muito.
-5.  **Hierarquia:** O uso correto de `##` e `###` cria um índice navegável automaticamente na maioria das plataformas de git.
-
-\*\*Gostaria que eu gerasse o código UML (texto para Mermaid.js) para você inserir no lugar onde coloquei a tag \`
-
-[Image of Strategy Pattern...]
-\`?\*\*
-```
