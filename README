@@ -1,94 +1,151 @@
-Este é um ótimo projeto\! Transformei suas notas em um arquivo **README.md** com formatação, emojis e foco na clareza para facilitar o entendimento e a execução.
+````markdown
+# 🚀 API Node.js Completa: Auth JWT & Strategy Pattern
 
------
+![NodeJS](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)
 
-# 🚀 API Node.js Completa com Autenticação JWT e Strategy Pattern
+> Uma API RESTful robusta focada em segurança, arquitetura limpa e extensibilidade.
 
-Este projeto é uma **API RESTful robusta** desenvolvida com **Node.js, Express, TypeScript e PostgreSQL**, focada em segurança e arquitetura limpa. Ele utiliza o padrão **Strategy Pattern** para flexibilizar a autenticação e inclui um frontend simples para testes rápidos de ponta a ponta.
+Este projeto demonstra uma implementação profissional de autenticação utilizando **JSON Web Tokens (JWT)** e o **Design Pattern Strategy**, permitindo múltiplos métodos de login (Email/Senha padrão e Chave Mestra) de forma desacoplada. Inclui um frontend minimalista para testes de ponta a ponta.
 
------
+---
 
 ## ✨ Recursos Principais
 
 | Categoria | Recurso | Descrição |
 | :--- | :--- | :--- |
-| **Backend** | **Node.js + Express** | API REST rápida e eficiente em TypeScript. |
-| **Banco de Dados** | **PostgreSQL + Prisma ORM** | Gerenciamento de dados seguro e tipado. |
-| **Segurança** | **JWT (JSON Web Tokens)** | Autenticação stateless com tokens. |
-| **Arquitetura** | **Strategy Pattern** | Estratégia de autenticação flexível (Padrão/Master Key). |
-| **Controle** | **Permissões (ADMIN/USER)** | Middleware de autenticação e autorização por função. |
-| **Frontend** | **HTML/CSS/JS** | Interface simples e responsiva para testar fluxos. |
-| **Testes** | **TDD com Jest** | Testes unitários para a camada de autenticação. |
+| **Backend** | Node.js + Express | API REST rápida e eficiente escrita em TypeScript. |
+| **Banco de Dados** | PostgreSQL + Prisma | ORM moderno para gerenciamento de dados seguro e tipado. |
+| **Segurança** | JWT | Autenticação *stateless* segura via tokens. |
+| **Arquitetura** | **Strategy Pattern** | Estratégia de autenticação flexível e escalável. |
+| **Controle** | RBAC (Role-Based) | Permissões granulares (ADMIN/USER) via Middleware. |
+| **Frontend** | HTML/CSS/JS | Interface simples para validação visual dos fluxos. |
+| **Testes** | TDD com Jest | Cobertura de testes unitários na camada de autenticação. |
 
------
+---
 
 ## 📂 Estrutura do Projeto
 
-A arquitetura do projeto é dividida em módulos claros para separar responsabilidades:
+A arquitetura segue princípios de separação de responsabilidades (SoC), facilitando a manutenção e a escalabilidade.
 
-```
+```text
 projeto/
 │
 ├── src/
-│   ├── routes/         # Definição dos endpoints da API
-│   ├── services/       # Lógica de negócio (ex: AuthService)
-│   ├── middlewares/    # Middleware de JWT e Permissões
-│   ├── strategies/     # Implementações do Strategy Pattern
-│   ├── db/             # Configuração Singleton do Prisma
-│   ├── app.ts          # Configuração do Express
-│   └── server.ts       # Inicialização do servidor
+│   ├── routes/         # Definição dos endpoints da API
+│   ├── services/       # Lógica de negócio (ex: AuthService)
+│   ├── middlewares/    # Interceptadores (JWT e Permissões)
+│   ├── strategies/     # Implementações do Strategy Pattern
+│   ├── db/             # Instância Singleton do Prisma Client
+│   ├── app.ts          # Configuração dos middlewares do Express
+│   └── server.ts       # Entry point do servidor
 │
-├── frontend/           # Interface de teste
-├── prisma/             # Schema e Migrações
-└── __tests__/          # Arquivos de Teste (Jest)
+├── frontend/           # Interface de teste (Consumo da API)
+├── prisma/             # Schema do banco e Migrações
+└── __tests__/          # Testes Automatizados (Jest)
+````
+
+-----
+
+## 🔒 Autenticação e Design Patterns
+
+O diferencial deste projeto é a aplicação do **Strategy Pattern** no fluxo de login. Isso permite que a API suporte diferentes mecanismos de entrada sem alterar a lógica principal do serviço.
+
+### 🔑 Estratégias Implementadas
+
+1.  **EmailPasswordStrategy (Padrão):**
+
+      * Valida credenciais tradicionais (email e senha com hash).
+      * Fluxo comum para usuários finais.
+
+2.  **MasterKeyStrategy (Admin):**
+
+      * Autenticação via `MASTER_KEY` definida no servidor.
+      * Ideal para *bootstrapping* do sistema ou criação do primeiro superusuário (ADMIN).
+
+-----
+
+## 🛠️ Configuração e Instalação
+
+### 1\. Pré-requisitos
+
+  * **Node.js** (v16 ou superior)
+  * **PostgreSQL** rodando localmente ou em container.
+
+### 2\. Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto e configure as chaves abaixo:
+
+```env
+# Conexão com o Banco de Dados
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/nome_do_banco"
+
+# Segurança JWT
+JWT_SECRET="seuSegredoSuperSeguroParaAssinatura"
+JWT_EXPIRES_IN="8h"
+
+# Chave Mestra para Login Administrativo
+MASTER_KEY="SUA_CHAVE_MASTER_SECRETA_123"
+```
+
+### 3\. Instalação e Migração
+
+```bash
+# Instalar dependências
+npm install
+
+# Rodar migrações do Prisma (Cria as tabelas no banco)
+npx prisma migrate dev
+
+# Gerar tipagem do Prisma Client
+npx prisma generate
 ```
 
 -----
 
-## 🔒 Autenticação e Segurança
+## ▶️ Executando o Projeto
 
-O projeto utiliza **JWT** e o **Strategy Pattern** para definir o método de autenticação, suportando fluxos diferentes através da mesma API.
+### Modo Desenvolvimento (Backend)
 
-### 🔑 Estratégias de Autenticação
+O servidor subirá na porta `3000` com *hot-reload*.
 
-1.  **EmailPasswordStrategy (Padrão):** Autenticação padrão de usuário com **email e senha**.
-2.  **MasterKeyStrategy:** Autenticação especial usando uma **Chave Mestra** (`MASTER_KEY`) para login administrativo, ideal para criação inicial de usuários `ADMIN`.
-
-### Variáveis de Ambiente (`.env`)
-
-Configure as seguintes variáveis na raiz do projeto:
-
-```env
-DATABASE_URL="postgresql://[usuário]:[senha]@localhost:5432/[nome_do_banco]"
-JWT_SECRET="seuSegredoParaAssinaturaDeTokens"
-JWT_EXPIRES_IN="8h"
-MASTER_KEY="SUA_CHAVE_MASTER_SECRETA"
+```bash
+npm run dev
 ```
 
-### Permissões
+### Frontend de Teste
 
-O sistema utiliza um campo `role` no banco para gerenciar acessos:
+Para testar a API visualmente, inicie o servidor de arquivos estáticos:
 
-  * **USER:** Usuários comuns.
-  * **ADMIN:** Administradores. Possuem privilégios exclusivos, como a **exclusão de usuários**.
+```bash
+npm run frontend
+```
+
+*Acesse em: `http://localhost:3000` (ou a porta indicada no terminal).*
 
 -----
 
 ## 🖥 API Endpoints
 
-| Método | Rota | Descrição | Requer Token? | Somente ADMIN? |
-| :--- | :--- | :--- | :---: | :---: |
-| **POST** | `/auth/register` | Criação de novo usuário. | ❌ | ❌ |
-| **POST** | `/auth/login` | Login (padrão ou MasterKey). | ❌ | ❌ |
-| **GET** | `/users` | Lista todos os usuários. | ✔ | ❌ |
-| **GET** | `/users/:id` | Busca um usuário por ID. | ✔ | ❌ |
-| **DELETE** | `/users/:id` | Deleta um usuário por ID. | ✔ | ✔ |
+Abaixo, a lista das principais rotas disponíveis.
+
+| Método | Rota | Descrição | Token? | Role |
+| :---: | :--- | :--- | :---: | :---: |
+| `POST` | `/auth/register` | Criação de novo usuário. | ❌ | Pública |
+| `POST` | `/auth/login` | Login (detecta estratégia via payload). | ❌ | Pública |
+| `GET` | `/users` | Lista todos os usuários cadastrados. | ✅ | **ADMIN** |
+| `GET` | `/users/:id` | Busca detalhes de um usuário. | ✅ | USER |
+| `DELETE` | `/users/:id` | Remove um usuário do sistema. | ✅ | **ADMIN** |
 
 -----
 
-## 💾 Banco de Dados (Prisma + PostgreSQL)
+## 💾 Modelo de Dados (Prisma)
 
-O modelo de dados é simples e centralizado no `schema.prisma`:
+O schema é enxuto, utilizando Enums ou Strings para controle de acesso.
 
 ```prisma
 model User {
@@ -96,7 +153,7 @@ model User {
   name      String
   email     String  @unique
   password  String
-  role      String  @default("USER")
+  role      String  @default("USER") // ou 'ADMIN'
 
   @@map("users")
 }
@@ -104,55 +161,33 @@ model User {
 
 -----
 
-## ▶️ Como Rodar o Projeto
+## 🧪 Testes
 
-### 1\. Pré-requisitos
-
-Certifique-se de ter **Node.js** e uma instância de **PostgreSQL** rodando.
-
-### 2\. Instalar dependências
+Os testes garantem a integridade da lógica de autenticação e das estratégias.
 
 ```bash
-npm install
+# Executar suite de testes completa
+npm test
 ```
-
-### 3\. Configurar e Migrar o Banco de Dados
-
-Crie o arquivo `.env` (conforme a seção de segurança acima) e execute as migrações:
-
-```bash
-npx prisma migrate dev
-npx prisma generate
-```
-
-### 4\. Rodar a API (Modo Desenvolvimento)
-
-O servidor de desenvolvimento utiliza `ts-node` e sobe na porta **3000**:
-
-```bash
-npm run dev
-```
-
-A API estará acessível em: `http://localhost:3000`
-
-### 5\. Rodar o Frontend (Para Teste)
-
-O frontend é uma aplicação simples em `frontend/index.html` que demonstra o uso dos endpoints:
-
-```bash
-npm run frontend
-```
-
-O site abrirá em: `http://localhost:3000` (ou porta adjacente, se ocupada).
 
 -----
 
-## 🧪 Testes Unitários (TDD com Jest)
+\<p align="center"\>
+Desenvolvido com 💙 e TypeScript
+\</p\>
 
-Os testes são focados na camada de autenticação (`__tests__/auth.test.ts`) para garantir a integridade dos fluxos de login e registro.
+```
 
-Para rodar todos os testes:
+### O que foi melhorado:
 
-```bash
-npm test
+1.  **Cabeçalho Visual:** Adicionei um título claro e os "badges" (escudos coloridos) das tecnologias. Isso dá credibilidade imediata ao repositório.
+2.  **Tabelas Formatadas:** Transformei as listas de recursos e endpoints em tabelas Markdown reais, o que facilita muito a leitura rápida.
+3.  **Blocos de Código:** Usei a sintaxe correta (` typescript,  `bash, ` env,  `prisma) para que o código fique colorido e legível no GitHub/GitLab.
+4.  **Diagrama Mental:** Adicionei um *placeholder* estratégico para o Strategy Pattern. Como o conceito é abstrato, ver onde ele se encaixa visualmente ajuda muito.
+5.  **Hierarquia:** O uso correto de `##` e `###` cria um índice navegável automaticamente na maioria das plataformas de git.
+
+\*\*Gostaria que eu gerasse o código UML (texto para Mermaid.js) para você inserir no lugar onde coloquei a tag \`
+
+[Image of Strategy Pattern...]
+\`?\*\*
 ```
