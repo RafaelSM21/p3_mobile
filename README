@@ -1,0 +1,298 @@
+Claro — aqui está um **README completo, organizado, profissional e pronto para entregar na FATEC**.
+Se quiser, posso gerar também **versão em PDF**, **markdown com imagens**, ou **versão curta para GitHub**.
+
+---
+
+# 📝 **README – API Kanban + Autenticação (LDDM + PDM2)**
+
+## 📌 **Descrição do Projeto**
+
+Este projeto consiste no desenvolvimento de uma **API REST completa**, construída para atender os requisitos das disciplinas **LDDM** e **PDM2**.
+Ela inclui autenticação, autorização, CRUD de usuários, implementação de estratégias de login, integração com banco de dados usando Prisma, testes automatizados com Jest, e um pequeno front-end para testes.
+
+---
+
+# 🏗️ **Tecnologias Utilizadas**
+
+* **Node.js + Express**
+* **TypeScript**
+* **Prisma ORM**
+* **SQLite** (pode trocar por MySQL/PostgreSQL)
+* **JWT (jsonwebtoken 8.5.1)**
+* **bcryptjs**
+* **Jest + Supertest**
+* **CORS**
+* **Strategy Pattern**
+* **Front-end HTML/CSS responsivo para testes**
+
+---
+
+# 📁 **Estrutura do Projeto**
+
+```
+src/
+ ├── app.ts
+ ├── db.ts
+ ├── middlewares/
+ │    └── auth.ts
+ ├── routes/
+ │    └── auth.ts
+ │    └── users.ts
+ ├── services/
+ │    └── auth.service.ts
+ │    └── user.service.ts
+ ├── strategies/
+ │    └── auth/
+ │         ├── AuthStrategy.ts
+ │         ├── EmailPasswordStrategy.ts
+ │         ├── MasterKeyStrategy.ts
+public/
+ └── index.html (frontend de teste)
+__tests__/
+ └── auth.test.ts
+```
+
+---
+
+# ⚙️ **Instalação e Configuração**
+
+## 1️⃣ Instalar dependências
+
+```bash
+npm install
+```
+
+## 2️⃣ Arquivo `.env`
+
+Crie um `.env` na raiz:
+
+```
+JWT_SECRET=dev_secret
+JWT_EXPIRES_IN=8h
+MASTER_KEY=FATEC123
+DATABASE_URL="file:./dev.db"
+```
+
+## 3️⃣ Ajuste IMPORTANTE: jsonwebtoken
+
+Este projeto usa **jsonwebtoken 8.5.1** (não 9.x), pois a versão nova quebra TypeScript e Jest.
+
+Instalação correta:
+
+```bash
+npm uninstall jsonwebtoken
+npm install jsonwebtoken@8.5.1
+npm install --save-dev @types/jsonwebtoken
+```
+
+---
+
+# 🗄️ **Banco de Dados**
+
+### Criar BD + gerar Prisma Client:
+
+```bash
+npx prisma migrate dev --name init
+```
+
+### Visualizar BD:
+
+```bash
+npx prisma studio
+```
+
+---
+
+# 🔐 **Autenticação e Autorização**
+
+A API usa **JWT**.
+Ao logar, o usuário recebe:
+
+```json
+{
+  "token": "...",
+  "user": {
+    "id": 1,
+    "name": "Rafael",
+    "email": "rafael@teste.com",
+    "role": "USER"
+  }
+}
+```
+
+### Middleware de autenticação
+
+`ensureAuth` protege rotas e injeta `req.user`.
+
+### Permissões
+
+* **Usuários comuns (`USER`)** → podem listar usuários.
+* **Admin (`ADMIN`)** → podem deletar usuários.
+
+---
+
+# 🧠 **Strategy Pattern no Login**
+
+O login funciona com duas estratégias:
+
+### 1. Email + Senha (padrão)
+
+```ts
+new EmailPasswordStrategy()
+```
+
+### 2. Master Key (login direto como ADMIN)
+
+```ts
+new MasterKeyStrategy()
+```
+
+Para ativar no front:
+
+```
+Usar modo master (master key)
+```
+
+---
+
+# 📌 **Rotas da API**
+
+## 🔑 **Autenticação**
+
+### **POST /auth/register**
+
+Body:
+
+```json
+{
+  "name": "Rafael",
+  "email": "rafael@teste.com",
+  "password": "123456",
+  "role": "ADMIN"
+}
+```
+
+### **POST /auth/login**
+
+```json
+{
+  "email": "rafael@teste.com",
+  "password": "123456"
+}
+```
+
+### **POST /auth/login (Master Mode)**
+
+```json
+{
+  "email": "admin",
+  "password": "MASTER_KEY",
+  "mode": "master"
+}
+```
+
+---
+
+## 👤 **Users**
+
+### **GET /users**
+
+Requer Bearer Token.
+
+### **GET /users/:id**
+
+### **DELETE /users/:id**
+
+Somente `ADMIN`.
+
+---
+
+# 🧪 **Testes Automatizados (Jest)**
+
+Os testes ficam na pasta:
+
+```
+__tests__/auth.test.ts
+```
+
+Para rodar:
+
+```bash
+npm test
+```
+
+Este teste valida:
+
+* registro
+* login
+* token válido
+* acesso protegido
+* erros esperados
+
+---
+
+# 🖥️ **Frontend de Teste (responsivo)**
+
+Dentro de `/public/index.html` há um painel completo com:
+
+* Registrar usuário
+* Login normal
+* Login com master key
+* Mostrar token
+* Listar usuários
+* Deletar usuário (se for admin)
+
+### Rodar o projeto:
+
+```bash
+npm run dev
+```
+
+Acesse:
+
+```
+http://localhost:3000
+```
+
+O front é **totalmente responsivo**, com CSS simples e interface intuitiva.
+
+---
+
+# 🧹 **Scripts Disponíveis**
+
+```bash
+npm run dev     # iniciar API com hot reload
+npm start       # rodar versão compilada
+npm test        # rodar Jest
+```
+
+---
+
+# 🎯 **Checklist de Requisitos (LDDM + PDM2)**
+
+| Item                          | Status                           |
+| ----------------------------- | -------------------------------- |
+| Implementação de API          | ✔️ Feito                         |
+| Endpoints básicos             | ✔️ Feito                         |
+| Responsividade da interface   | ✔️ Feito                         |
+| Autenticação de usuário (JWT) | ✔️ Feito                         |
+| Banco de dados (Prisma)       | ✔️ Feito                         |
+| CRUD de usuários              | ✔️ Feito                         |
+| Permissões (USER/ADMIN)       | ✔️ Feito                         |
+| Simulador de Kanban           | 🔜 *próximo passo se quiser*     |
+| TDD                           | ✔️ Feito com Jest                |
+| Design patterns               | ✔️ Strategy Pattern implementado |
+
+---
+
+# 📞 **Suporte / Ajuda**
+
+Se quiser, posso:
+
+* Criar o **Kanban completo** usando a mesma API
+* Criar mais testes TDD
+* Melhorar o front com React ou Tailwind
+* Gerar documentação em PDF
+* Criar swagger da API
+
+Só pedir!

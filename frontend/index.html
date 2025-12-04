@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste API — Auth & RBAC</title>
+
+  <style>
+    /* ----------- GLOBAL ----------- */
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+      background: #fafafa;
+      line-height: 1.5;
+    }
+
+    h1, h3 {
+      margin-top: 0;
+    }
+
+    /* ----------- CARDS ----------- */
+    .card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    /* ----------- INPUTS & BUTTONS ----------- */
+    input, button {
+      padding: 12px;
+      margin: 6px 0;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 1rem;
+      border-radius: 8px;
+    }
+
+    input {
+      border: 1px solid #ccc;
+    }
+
+    button {
+      border: none;
+      background: #0078ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #005fcc;
+    }
+
+    /* ----------- ROWS RESPONSIVAS ----------- */
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .row > * {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    /* ----------- PRE ----------- */
+    pre {
+      background:#f2f2f2;
+      padding:12px;
+      border-radius:8px;
+      overflow:auto;
+      font-size: 0.9rem;
+    }
+
+    /* ----------- RESPONSIVIDADE EXTRA ----------- */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+      input {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Frontend responsivo — Auth & Permissões</h1>
+
+  <!-- BASE URL -->
+  <div class="card">
+    <strong>API base:</strong> <span id="baseUrl">http://localhost:3000</span><br>
+    <small>Caso mude, ajuste a constante API_BASE no final do arquivo.</small>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="card">
+    <h3>Registrar (POST /auth/register)</h3>
+    <input id="reg_name" placeholder="Nome" />
+    <input id="reg_email" placeholder="Email" />
+    <input id="reg_pass" placeholder="Senha" type="password" />
+    <input id="reg_masterKey" placeholder="Master Key (para criar ADMIN)" type="password" />
+    <button id="btnRegister">Registrar</button>
+    <div id="regResult"></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="card">
+    <h3>Login (POST /auth/login)</h3>
+    <input id="log_email" placeholder="Email" />
+    <input id="log_pass" placeholder="Senha" type="password" />
+    <label><input type="checkbox" id="masterMode"> Login via Master Key</label>
+    <button id="btnLogin">Login</button>
+    <div id="loginResult"></div>
+  </div>
+
+  <!-- TOKEN -->
+  <div class="card">
+    <h3>Token atual</h3>
+    <pre id="tokenBox">-- nenhum token --</pre>
+
+    <div class="row">
+      <button id="btnClearToken">Limpar Token</button>
+      <button id="btnShowUser">Ver dados do Token</button>
+    </div>
+
+    <div id="decodedUser"></div>
+  </div>
+
+  <!-- PROTEGIDOS -->
+  <div class="card">
+    <h3>Rotas protegidas</h3>
+
+    <div class="row">
+      <button id="btnMe">GET /users/me</button>
+      <button id="btnList">GET /users (ADMIN)</button>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <input id="deleteId" placeholder="ID" />
+      <button id="btnDelete">DELETE /users/:id (ADMIN)</button>
+    </div>
+
+    <div id="protectedResult"></div>
+  </div>
+
+
+  <!-- JAVASCRIPT -->
+  <script>
+    const API_BASE = "http://localhost:3000";
+
+    const out = (el, data) =>
+      el.innerHTML = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+
+    const getToken = () => localStorage.getItem("jwt_token");
+    const setToken = (t) => {
+      t ? localStorage.setItem("jwt_token", t) : localStorage.removeItem("jwt_token");
+      document.getElementById("tokenBox").textContent = t || "-- nenhum token --";
+    };
+
+    const headers = () => ({
+      "Content-Type": "application/json",
+      ...(getToken() ? { "Authorization": "Bearer " + getToken() } : {})
+    });
+
+    // REGISTER
+    document.getElementById("btnRegister").onclick = async () => {
+      const body = {
+        name: reg_name.value,
+        email: reg_email.value,
+        password: reg_pass.value,
+        masterKey: reg_masterKey.value || undefined
+      };
+      try {
+        const res = await fetch(API_BASE + "/auth/register", {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body)
+        });
+        out(regResult, await res.json());
+      } catch (e) {
+        out(regResult, e.toString());
+      }
+    };
+
+    // LOGIN
+    document.getElementById("btnLogin").onclick = async () => {
+      const body = {
+        email: log_email.value,
+        password: log_pass.value,
+        ...(masterMode.checked ? { mode: "master" } : {})
+      };
+      try {
+        const res = await fetch(API_BASE + "/auth/login", {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify(body)
+        });
+        const json = await res.json();
+        if (json.token) setToken(json.token);
+        out(loginResult, json);
+      } catch (e) {
+        out(loginResult, e.toString());
+      }
+    };
+
+    // CLEAR TOKEN
+    document.getElementById("btnClearToken").onclick = () => {
+      setToken(null);
+      decodedUser.textContent = "";
+    };
+
+    // SHOW TOKEN USER
+    document.getElementById("btnShowUser").onclick = () => {
+      const t = getToken();
+      if (!t) return alert("Sem token salvo");
+      try {
+        const decoded = JSON.parse(atob(t.split(".")[1]));
+        out(decodedUser, decoded);
+      } catch {
+        out(decodedUser, "Token inválido");
+      }
+    };
+
+    // ME
+    document.getElementById("btnMe").onclick = async () => {
+      const res = await fetch(API_BASE + "/users/me", { headers: headers() });
+      out(protectedResult, await res.json());
+    };
+
+    // LIST USERS (ADMIN)
+    document.getElementById("btnList").onclick = async () => {
+      const res = await fetch(API_BASE + "/users", { headers: headers() });
+      out(protectedResult, await res.json());
+    };
+
+    // DELETE USER
+    document.getElementById("btnDelete").onclick = async () => {
+      const id = deleteId.value;
+      const res = await fetch(API_BASE + "/users/" + id, {
+        method: "DELETE",
+        headers: headers()
+      });
+      out(protectedResult, await res.json());
+    };
+
+    // inicializar token
+    setToken(getToken());
+  </script>
+
+</body>
+</html>
