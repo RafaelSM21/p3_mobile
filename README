@@ -1,298 +1,242 @@
-Claro — aqui está um **README completo, organizado, profissional e pronto para entregar na FATEC**.
-Se quiser, posso gerar também **versão em PDF**, **markdown com imagens**, ou **versão curta para GitHub**.
+# 📘 Projeto — API + Autenticação + Frontend + TDD (Node, Express, Prisma, JWT)
+
+Este projeto implementa:
+
+✔ API completa em **Node.js + Express**
+✔ Banco de dados com **PostgreSQL + Prisma ORM**
+✔ Autenticação com **JWT**
+✔ Estratégia de autenticação com **Strategy Pattern**
+✔ Singleton para conexão com Prisma
+✔ CRUD de usuários
+✔ Permissões (ADMIN vs USER)
+✔ Middleware de autenticação
+✔ Frontend simples e responsivo para testar login, cadastro e administração
+✔ Testes com **Jest** (TDD básico)
 
 ---
 
-# 📝 **README – API Kanban + Autenticação (LDDM + PDM2)**
-
-## 📌 **Descrição do Projeto**
-
-Este projeto consiste no desenvolvimento de uma **API REST completa**, construída para atender os requisitos das disciplinas **LDDM** e **PDM2**.
-Ela inclui autenticação, autorização, CRUD de usuários, implementação de estratégias de login, integração com banco de dados usando Prisma, testes automatizados com Jest, e um pequeno front-end para testes.
-
----
-
-# 🏗️ **Tecnologias Utilizadas**
-
-* **Node.js + Express**
-* **TypeScript**
-* **Prisma ORM**
-* **SQLite** (pode trocar por MySQL/PostgreSQL)
-* **JWT (jsonwebtoken 8.5.1)**
-* **bcryptjs**
-* **Jest + Supertest**
-* **CORS**
-* **Strategy Pattern**
-* **Front-end HTML/CSS responsivo para testes**
-
----
-
-# 📁 **Estrutura do Projeto**
+# 📂 Estrutura do Projeto
 
 ```
-src/
- ├── app.ts
- ├── db.ts
- ├── middlewares/
- │    └── auth.ts
- ├── routes/
- │    └── auth.ts
- │    └── users.ts
- ├── services/
- │    └── auth.service.ts
- │    └── user.service.ts
- ├── strategies/
- │    └── auth/
- │         ├── AuthStrategy.ts
- │         ├── EmailPasswordStrategy.ts
- │         ├── MasterKeyStrategy.ts
-public/
- └── index.html (frontend de teste)
-__tests__/
- └── auth.test.ts
+projeto/
+│
+├── src/
+│   ├── routes/
+│   ├── services/
+│   ├── middlewares/
+│   ├── strategies/
+│   ├── db/
+│   ├── app.ts
+│   └── server.ts
+│
+├── prisma/
+│   └── schema.prisma
+│
+├── frontend/
+│   ├── index.html
+│   ├── styles.css
+│   └── main.js
+│
+├── __tests__/
+│   └── auth.test.ts
+│
+├── package.json
+└── README.md
 ```
 
 ---
 
-# ⚙️ **Instalação e Configuração**
+# 🏦 Banco de Dados — Prisma + PostgreSQL
 
-## 1️⃣ Instalar dependências
+Arquivo `schema.prisma`:
 
-```bash
-npm install
-```
+```prisma
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  role     String  @default("USER")
 
-## 2️⃣ Arquivo `.env`
-
-Crie um `.env` na raiz:
-
-```
-JWT_SECRET=dev_secret
-JWT_EXPIRES_IN=8h
-MASTER_KEY=FATEC123
-DATABASE_URL="file:./dev.db"
-```
-
-## 3️⃣ Ajuste IMPORTANTE: jsonwebtoken
-
-Este projeto usa **jsonwebtoken 8.5.1** (não 9.x), pois a versão nova quebra TypeScript e Jest.
-
-Instalação correta:
-
-```bash
-npm uninstall jsonwebtoken
-npm install jsonwebtoken@8.5.1
-npm install --save-dev @types/jsonwebtoken
-```
-
----
-
-# 🗄️ **Banco de Dados**
-
-### Criar BD + gerar Prisma Client:
-
-```bash
-npx prisma migrate dev --name init
-```
-
-### Visualizar BD:
-
-```bash
-npx prisma studio
-```
-
----
-
-# 🔐 **Autenticação e Autorização**
-
-A API usa **JWT**.
-Ao logar, o usuário recebe:
-
-```json
-{
-  "token": "...",
-  "user": {
-    "id": 1,
-    "name": "Rafael",
-    "email": "rafael@teste.com",
-    "role": "USER"
-  }
+  @@map("users")
 }
 ```
 
-### Middleware de autenticação
+Comandos:
 
-`ensureAuth` protege rotas e injeta `req.user`.
-
-### Permissões
-
-* **Usuários comuns (`USER`)** → podem listar usuários.
-* **Admin (`ADMIN`)** → podem deletar usuários.
-
----
-
-# 🧠 **Strategy Pattern no Login**
-
-O login funciona com duas estratégias:
-
-### 1. Email + Senha (padrão)
-
-```ts
-new EmailPasswordStrategy()
-```
-
-### 2. Master Key (login direto como ADMIN)
-
-```ts
-new MasterKeyStrategy()
-```
-
-Para ativar no front:
-
-```
-Usar modo master (master key)
+```bash
+npx prisma migrate dev
+npx prisma generate
 ```
 
 ---
 
-# 📌 **Rotas da API**
+# 🔐 Autenticação – JWT + Strategy Pattern
 
-## 🔑 **Autenticação**
+Existem duas estratégias de autenticação:
 
-### **POST /auth/register**
+### **1. EmailPasswordStrategy (padrão)**
 
-Body:
+Autentica um usuário normal usando email e senha.
 
-```json
-{
-  "name": "Rafael",
-  "email": "rafael@teste.com",
-  "password": "123456",
-  "role": "ADMIN"
-}
+### **2. MasterKeyStrategy**
+
+Autenticação especial usando uma chave mestra (`MASTER_KEY`) para criar usuários admin.
+
+Arquivo `.env`:
+
 ```
-
-### **POST /auth/login**
-
-```json
-{
-  "email": "rafael@teste.com",
-  "password": "123456"
-}
-```
-
-### **POST /auth/login (Master Mode)**
-
-```json
-{
-  "email": "admin",
-  "password": "MASTER_KEY",
-  "mode": "master"
-}
+DATABASE_URL="postgresql://..."
+JWT_SECRET="seuSegredoAqui"
+JWT_EXPIRES_IN="8h"
+MASTER_KEY="SUA_CHAVE_MASTER"
 ```
 
 ---
 
-## 👤 **Users**
+# 👤 Permissões de Acesso (Admin)
 
-### **GET /users**
+* Usuários comuns → **USER**
+* Administrador → **ADMIN**
 
-Requer Bearer Token.
-
-### **GET /users/:id**
-
-### **DELETE /users/:id**
-
-Somente `ADMIN`.
+Somente administradores podem deletar usuários.
 
 ---
 
-# 🧪 **Testes Automatizados (Jest)**
+# 🧪 TDD — Testes com Jest
 
-Os testes ficam na pasta:
-
-```
-__tests__/auth.test.ts
-```
-
-Para rodar:
+Comando:
 
 ```bash
 npm test
 ```
 
-Este teste valida:
-
-* registro
-* login
-* token válido
-* acesso protegido
-* erros esperados
+Os testes usam o `EmailPasswordStrategy` e verificam falhas e sucessos de login.
 
 ---
 
-# 🖥️ **Frontend de Teste (responsivo)**
+# 🖥 API Endpoints
 
-Dentro de `/public/index.html` há um painel completo com:
+### **Autenticação**
 
-* Registrar usuário
-* Login normal
-* Login com master key
-* Mostrar token
-* Listar usuários
-* Deletar usuário (se for admin)
+| Método | Rota             | Descrição              |
+| ------ | ---------------- | ---------------------- |
+| POST   | `/auth/register` | Cria usuário           |
+| POST   | `/auth/login`    | Login normal ou master |
 
-### Rodar o projeto:
+---
+
+### **Usuários**
+
+| Método | Rota         | Requer login | Somente Admin |
+| ------ | ------------ | ------------ | ------------- |
+| GET    | `/users`     | ✔            | ❌             |
+| GET    | `/users/:id` | ✔            | ❌             |
+| DELETE | `/users/:id` | ✔            | ✔             |
+
+---
+
+# 🌐 Frontend Responsivo
+
+O projeto possui um **frontend próprio** para testar registro, login, listagem e exclusão de usuários.
+
+Local:
+
+```
+frontend/
+  index.html
+```
+
+Exibe:
+
+✔ Tela de registro
+✔ Tela de login
+✔ Listagem de usuários (com token armazenado)
+✔ Botão “Criar Admin” via MasterKey
+✔ Exclusão de usuário (se logado como admin)
+✔ Totalmente responsivo (mobile + desktop)
+
+---
+
+# ▶️ Como Rodar o Projeto
+
+## 1. Instalar dependências
+
+```bash
+npm install
+```
+
+---
+
+## 2. Configurar .env
+
+```bash
+DATABASE_URL="postgresql://..."
+JWT_SECRET="dev_secret"
+JWT_EXPIRES_IN="8h"
+MASTER_KEY="MASTER123"
+```
+
+---
+
+## 3. Criar banco
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+## 4. Rodar a API
 
 ```bash
 npm run dev
 ```
 
-Acesse:
+Servidor sobe em:
 
 ```
 http://localhost:3000
 ```
 
-O front é **totalmente responsivo**, com CSS simples e interface intuitiva.
-
 ---
 
-# 🧹 **Scripts Disponíveis**
+# 🖥 5. Rodar o Frontend (NOVO)
 
-```bash
-npm run dev     # iniciar API com hot reload
-npm start       # rodar versão compilada
-npm test        # rodar Jest
+O frontend fica na pasta:
+
+```
+/frontend
 ```
 
+Para rodar:
+
+### ✔ Comando oficial:
+
+```bash
+npm run frontend
+```
+
+### ✔ Ou manualmente:
+
+```bash
+npx serve frontend
+```
+
+O site abrirá em:
+
+```
+http://localhost:3000
+ou
+http://localhost:3001
+```
+
+(O `serve` escolhe automaticamente a porta.)
+
 ---
 
-# 🎯 **Checklist de Requisitos (LDDM + PDM2)**
+# 🧪 6. Rodar Testes (Jest)
 
-| Item                          | Status                           |
-| ----------------------------- | -------------------------------- |
-| Implementação de API          | ✔️ Feito                         |
-| Endpoints básicos             | ✔️ Feito                         |
-| Responsividade da interface   | ✔️ Feito                         |
-| Autenticação de usuário (JWT) | ✔️ Feito                         |
-| Banco de dados (Prisma)       | ✔️ Feito                         |
-| CRUD de usuários              | ✔️ Feito                         |
-| Permissões (USER/ADMIN)       | ✔️ Feito                         |
-| Simulador de Kanban           | 🔜 *próximo passo se quiser*     |
-| TDD                           | ✔️ Feito com Jest                |
-| Design patterns               | ✔️ Strategy Pattern implementado |
-
----
-
-# 📞 **Suporte / Ajuda**
-
-Se quiser, posso:
-
-* Criar o **Kanban completo** usando a mesma API
-* Criar mais testes TDD
-* Melhorar o front com React ou Tailwind
-* Gerar documentação em PDF
-* Criar swagger da API
-
-Só pedir!
+```bash
+npm test
+```
