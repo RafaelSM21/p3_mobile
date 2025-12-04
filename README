@@ -1,241 +1,157 @@
-# 📘 Projeto — API + Autenticação + Frontend + TDD (Node, Express, Prisma, JWT)
+Este é um ótimo projeto\! Transformei suas notas em um arquivo **README.md** com formatação, emojis e foco na clareza para facilitar o entendimento e a execução.
 
-Este projeto implementa:
+-----
 
-✔ API completa em **Node.js + Express**
-✔ Banco de dados com **PostgreSQL + Prisma ORM**
-✔ Autenticação com **JWT**
-✔ Estratégia de autenticação com **Strategy Pattern**
-✔ Singleton para conexão com Prisma
-✔ CRUD de usuários
-✔ Permissões (ADMIN vs USER)
-✔ Middleware de autenticação
-✔ Frontend simples e responsivo para testar login, cadastro e administração
-✔ Testes com **Jest** (TDD básico)
+# 🚀 API Node.js Completa com Autenticação JWT e Strategy Pattern
 
----
+Este projeto é uma **API RESTful robusta** desenvolvida com **Node.js, Express, TypeScript e PostgreSQL**, focada em segurança e arquitetura limpa. Ele utiliza o padrão **Strategy Pattern** para flexibilizar a autenticação e inclui um frontend simples para testes rápidos de ponta a ponta.
 
-# 📂 Estrutura do Projeto
+-----
+
+## ✨ Recursos Principais
+
+| Categoria | Recurso | Descrição |
+| :--- | :--- | :--- |
+| **Backend** | **Node.js + Express** | API REST rápida e eficiente em TypeScript. |
+| **Banco de Dados** | **PostgreSQL + Prisma ORM** | Gerenciamento de dados seguro e tipado. |
+| **Segurança** | **JWT (JSON Web Tokens)** | Autenticação stateless com tokens. |
+| **Arquitetura** | **Strategy Pattern** | Estratégia de autenticação flexível (Padrão/Master Key). |
+| **Controle** | **Permissões (ADMIN/USER)** | Middleware de autenticação e autorização por função. |
+| **Frontend** | **HTML/CSS/JS** | Interface simples e responsiva para testar fluxos. |
+| **Testes** | **TDD com Jest** | Testes unitários para a camada de autenticação. |
+
+-----
+
+## 📂 Estrutura do Projeto
+
+A arquitetura do projeto é dividida em módulos claros para separar responsabilidades:
 
 ```
 projeto/
 │
 ├── src/
-│   ├── routes/
-│   ├── services/
-│   ├── middlewares/
-│   ├── strategies/
-│   ├── db/
-│   ├── app.ts
-│   └── server.ts
+│   ├── routes/         # Definição dos endpoints da API
+│   ├── services/       # Lógica de negócio (ex: AuthService)
+│   ├── middlewares/    # Middleware de JWT e Permissões
+│   ├── strategies/     # Implementações do Strategy Pattern
+│   ├── db/             # Configuração Singleton do Prisma
+│   ├── app.ts          # Configuração do Express
+│   └── server.ts       # Inicialização do servidor
 │
-├── prisma/
-│   └── schema.prisma
-│
-├── frontend/
-│   ├── index.html
-│   ├── styles.css
-│   └── main.js
-│
-├── __tests__/
-│   └── auth.test.ts
-│
-├── package.json
-└── README.md
+├── frontend/           # Interface de teste
+├── prisma/             # Schema e Migrações
+└── __tests__/          # Arquivos de Teste (Jest)
 ```
 
----
+-----
 
-# 🏦 Banco de Dados — Prisma + PostgreSQL
+## 🔒 Autenticação e Segurança
 
-Arquivo `schema.prisma`:
+O projeto utiliza **JWT** e o **Strategy Pattern** para definir o método de autenticação, suportando fluxos diferentes através da mesma API.
+
+### 🔑 Estratégias de Autenticação
+
+1.  **EmailPasswordStrategy (Padrão):** Autenticação padrão de usuário com **email e senha**.
+2.  **MasterKeyStrategy:** Autenticação especial usando uma **Chave Mestra** (`MASTER_KEY`) para login administrativo, ideal para criação inicial de usuários `ADMIN`.
+
+### Variáveis de Ambiente (`.env`)
+
+Configure as seguintes variáveis na raiz do projeto:
+
+```env
+DATABASE_URL="postgresql://[usuário]:[senha]@localhost:5432/[nome_do_banco]"
+JWT_SECRET="seuSegredoParaAssinaturaDeTokens"
+JWT_EXPIRES_IN="8h"
+MASTER_KEY="SUA_CHAVE_MASTER_SECRETA"
+```
+
+### Permissões
+
+O sistema utiliza um campo `role` no banco para gerenciar acessos:
+
+  * **USER:** Usuários comuns.
+  * **ADMIN:** Administradores. Possuem privilégios exclusivos, como a **exclusão de usuários**.
+
+-----
+
+## 🖥 API Endpoints
+
+| Método | Rota | Descrição | Requer Token? | Somente ADMIN? |
+| :--- | :--- | :--- | :---: | :---: |
+| **POST** | `/auth/register` | Criação de novo usuário. | ❌ | ❌ |
+| **POST** | `/auth/login` | Login (padrão ou MasterKey). | ❌ | ❌ |
+| **GET** | `/users` | Lista todos os usuários. | ✔ | ❌ |
+| **GET** | `/users/:id` | Busca um usuário por ID. | ✔ | ❌ |
+| **DELETE** | `/users/:id` | Deleta um usuário por ID. | ✔ | ✔ |
+
+-----
+
+## 💾 Banco de Dados (Prisma + PostgreSQL)
+
+O modelo de dados é simples e centralizado no `schema.prisma`:
 
 ```prisma
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String
-  email    String  @unique
-  password String
-  role     String  @default("USER")
+  id        Int     @id @default(autoincrement())
+  name      String
+  email     String  @unique
+  password  String
+  role      String  @default("USER")
 
   @@map("users")
 }
 ```
 
-Comandos:
+-----
+
+## ▶️ Como Rodar o Projeto
+
+### 1\. Pré-requisitos
+
+Certifique-se de ter **Node.js** e uma instância de **PostgreSQL** rodando.
+
+### 2\. Instalar dependências
+
+```bash
+npm install
+```
+
+### 3\. Configurar e Migrar o Banco de Dados
+
+Crie o arquivo `.env` (conforme a seção de segurança acima) e execute as migrações:
 
 ```bash
 npx prisma migrate dev
 npx prisma generate
 ```
 
----
+### 4\. Rodar a API (Modo Desenvolvimento)
 
-# 🔐 Autenticação – JWT + Strategy Pattern
-
-Existem duas estratégias de autenticação:
-
-### **1. EmailPasswordStrategy (padrão)**
-
-Autentica um usuário normal usando email e senha.
-
-### **2. MasterKeyStrategy**
-
-Autenticação especial usando uma chave mestra (`MASTER_KEY`) para criar usuários admin.
-
-Arquivo `.env`:
-
-```
-DATABASE_URL="postgresql://..."
-JWT_SECRET="seuSegredoAqui"
-JWT_EXPIRES_IN="8h"
-MASTER_KEY="SUA_CHAVE_MASTER"
-```
-
----
-
-# 👤 Permissões de Acesso (Admin)
-
-* Usuários comuns → **USER**
-* Administrador → **ADMIN**
-
-Somente administradores podem deletar usuários.
-
----
-
-# 🧪 TDD — Testes com Jest
-
-Comando:
-
-```bash
-npm test
-```
-
-Os testes usam o `EmailPasswordStrategy` e verificam falhas e sucessos de login.
-
----
-
-# 🖥 API Endpoints
-
-### **Autenticação**
-
-| Método | Rota             | Descrição              |
-| ------ | ---------------- | ---------------------- |
-| POST   | `/auth/register` | Cria usuário           |
-| POST   | `/auth/login`    | Login normal ou master |
-
----
-
-### **Usuários**
-
-| Método | Rota         | Requer login | Somente Admin |
-| ------ | ------------ | ------------ | ------------- |
-| GET    | `/users`     | ✔            | ❌             |
-| GET    | `/users/:id` | ✔            | ❌             |
-| DELETE | `/users/:id` | ✔            | ✔             |
-
----
-
-# 🌐 Frontend Responsivo
-
-O projeto possui um **frontend próprio** para testar registro, login, listagem e exclusão de usuários.
-
-Local:
-
-```
-frontend/
-  index.html
-```
-
-Exibe:
-
-✔ Tela de registro
-✔ Tela de login
-✔ Listagem de usuários (com token armazenado)
-✔ Botão “Criar Admin” via MasterKey
-✔ Exclusão de usuário (se logado como admin)
-✔ Totalmente responsivo (mobile + desktop)
-
----
-
-# ▶️ Como Rodar o Projeto
-
-## 1. Instalar dependências
-
-```bash
-npm install
-```
-
----
-
-## 2. Configurar .env
-
-```bash
-DATABASE_URL="postgresql://..."
-JWT_SECRET="dev_secret"
-JWT_EXPIRES_IN="8h"
-MASTER_KEY="MASTER123"
-```
-
----
-
-## 3. Criar banco
-
-```bash
-npx prisma migrate dev
-```
-
----
-
-## 4. Rodar a API
+O servidor de desenvolvimento utiliza `ts-node` e sobe na porta **3000**:
 
 ```bash
 npm run dev
 ```
 
-Servidor sobe em:
+A API estará acessível em: `http://localhost:3000`
 
-```
-http://localhost:3000
-```
+### 5\. Rodar o Frontend (Para Teste)
 
----
-
-# 🖥 5. Rodar o Frontend (NOVO)
-
-O frontend fica na pasta:
-
-```
-/frontend
-```
-
-Para rodar:
-
-### ✔ Comando oficial:
+O frontend é uma aplicação simples em `frontend/index.html` que demonstra o uso dos endpoints:
 
 ```bash
 npm run frontend
 ```
 
-### ✔ Ou manualmente:
+O site abrirá em: `http://localhost:3000` (ou porta adjacente, se ocupada).
 
-```bash
-npx serve frontend
-```
+-----
 
-O site abrirá em:
+## 🧪 Testes Unitários (TDD com Jest)
 
-```
-http://localhost:3000
-ou
-http://localhost:3001
-```
+Os testes são focados na camada de autenticação (`__tests__/auth.test.ts`) para garantir a integridade dos fluxos de login e registro.
 
-(O `serve` escolhe automaticamente a porta.)
-
----
-
-# 🧪 6. Rodar Testes (Jest)
+Para rodar todos os testes:
 
 ```bash
 npm test
