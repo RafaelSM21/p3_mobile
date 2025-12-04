@@ -121,7 +121,7 @@ npm run dev
 Para testar a API visualmente, inicie o servidor de arquivos estáticos:
 
 ```bash
-npm run frontend
+npx serve frontend
 ```
 
 *Acesse em: `http://localhost:3000` (ou a porta indicada no terminal).*
