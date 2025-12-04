@@ -3,173 +3,557 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teste API — Auth & RBAC</title>
+  <title>Sistema de Autenticação e RBAC</title>
 
   <style>
-    /* ----------- GLOBAL ----------- */
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 16px;
-      background: #fafafa;
-      line-height: 1.5;
+    /* ----------- RESET & GLOBAL ----------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    h1, h3 {
-      margin-top: 0;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      padding: 16px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    /* ----------- HEADER ----------- */
+    header {
+      background: rgba(255, 255, 255, 0.97);
+      padding: 32px 24px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(30, 60, 114, 0.25);
+      margin-bottom: 32px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    header h1 {
+      color: #1e3c72;
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: #666;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .api-info {
+      background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-top: 18px;
+      border: 2px solid rgba(30, 60, 114, 0.1);
+      font-size: 0.9rem;
+    }
+
+    .api-info strong {
+      color: #1e3c72;
+      font-weight: 600;
+    }
+
+    .api-info span {
+      color: #2a5298;
+      font-family: 'Courier New', monospace;
+      font-weight: 500;
+    }
+
+    /* ----------- GRID LAYOUT ----------- */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
     }
 
     /* ----------- CARDS ----------- */
     .card {
       background: white;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      margin-bottom: 18px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      padding: 28px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(30, 60, 114, 0.15);
+      border: 1px solid rgba(30, 60, 114, 0.08);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .card:hover::before {
+      left: 100%;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(30, 60, 114, 0.22);
+      border-color: rgba(30, 60, 114, 0.15);
+    }
+
+    .card h3 {
+      color: #1e3c72;
+      font-size: 1.35rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .card h3::before {
+      content: '';
+      width: 5px;
+      height: 28px;
+      background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+      border-radius: 3px;
+      flex-shrink: 0;
     }
 
     /* ----------- INPUTS & BUTTONS ----------- */
-    input, button {
-      padding: 12px;
-      margin: 6px 0;
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 1rem;
-      border-radius: 8px;
+    .form-group {
+      margin-bottom: 14px;
     }
 
-    input {
-      border: 1px solid #ccc;
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid #e8e8e8;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #2a5298;
+      box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.12);
+      background: white;
+    }
+
+    input::placeholder {
+      color: #999;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
     }
 
     button {
-      border: none;
-      background: #0078ff;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      background: #005fcc;
-    }
-
-    /* ----------- ROWS RESPONSIVAS ----------- */
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .row > * {
       flex: 1;
-      min-width: 200px;
+      min-width: 150px;
+      padding: 13px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      position: relative;
+      overflow: hidden;
     }
 
-    /* ----------- PRE ----------- */
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    button:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      box-shadow: 0 6px 20px rgba(30, 60, 114, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(30, 60, 114, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e8f4ff 100%);
+      color: #1e3c72;
+      border: 2px solid #1e3c72;
+      font-weight: 700;
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      box-shadow: 0 8px 25px rgba(30, 60, 114, 0.35);
+      transform: translateY(-3px);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #d81b60 0%, #c2185b 100%);
+      color: white;
+      box-shadow: 0 6px 20px rgba(216, 27, 96, 0.35);
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(216, 27, 96, 0.45);
+    }
+
+    /* ----------- OUTPUT AREAS ----------- */
+    .result {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #f9f9f9;
+      border-left: 5px solid #1e3c72;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    .result.success {
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+      border-left-color: #2e7d32;
+    }
+
+    .result.error {
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+      border-left-color: #c62828;
+    }
+
     pre {
-      background:#f2f2f2;
-      padding:12px;
-      border-radius:8px;
-      overflow:auto;
-      font-size: 0.9rem;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      border-radius: 10px;
+      overflow: auto;
+      font-size: 0.85rem;
+      font-family: 'Courier New', monospace;
+      line-height: 1.5;
     }
 
-    /* ----------- RESPONSIVIDADE EXTRA ----------- */
+    .token-box {
+      background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+      padding: 16px;
+      border-radius: 10px;
+      border: 2px dashed #ddd;
+      word-break: break-all;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      margin: 16px 0;
+      max-height: 120px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+    }
+
+    .token-box.active {
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+      border-color: #2e7d32;
+      color: #1b5e20;
+    }
+
+    /* ----------- FULL WIDTH SECTION ----------- */
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    /* ----------- STATUS BADGE ----------- */
+    .status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 25px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 14px;
+      letter-spacing: 0.3px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .status-badge.authenticated {
+      background: linear-gradient(135deg, #c8e6c9 0%, #dcedc8 100%);
+      color: #1b5e20;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+    }
+
+    .status-badge.unauthenticated {
+      background: linear-gradient(135deg, #ffcdd2 0%, #ffebee 100%);
+      color: #b71c1c;
+      box-shadow: 0 4px 12px rgba(198, 40, 40, 0.2);
+    }
+
+    /* ----------- DIVIDER ----------- */
+    .divider {
+      border-top: 2px solid #f0f0f0;
+      margin: 20px 0;
+    }
+
+    .section-label {
+      color: #666;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    /* ----------- RESPONSIVE ----------- */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.8rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      button {
+        min-width: 120px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .button-group button {
+        min-width: 100%;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+
     @media (max-width: 480px) {
       body {
         padding: 8px;
       }
-      h1 {
+
+      header {
+        padding: 20px 16px;
+        margin-bottom: 20px;
+      }
+
+      header h1 {
         font-size: 1.4rem;
       }
-      button {
-        font-size: 0.9rem;
-        padding: 10px;
+
+      .card {
+        padding: 16px;
       }
-      input {
-        font-size: 0.9rem;
+
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 11px 14px;
+        font-size: 16px;
+      }
+
+      button {
+        padding: 11px 14px;
+        font-size: 0.8rem;
+      }
+
+      pre {
+        font-size: 0.75rem;
+        padding: 12px;
+      }
+
+      .card h3 {
+        font-size: 1.1rem;
       }
     }
   </style>
 </head>
 
 <body>
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <h1>🔐 Autenticação</h1>
+      <p>Gerenciamento de usuários com controle de acesso</p>
+      <div class="api-info">
+        <strong>🌐 API Base:</strong> <span id="baseUrl">http://localhost:3000</span>
+      </div>
+    </header>
 
-  <h1>Frontend responsivo — Auth & Permissões</h1>
+    <!-- MAIN GRID -->
+    <div class="grid">
 
-  <!-- BASE URL -->
-  <div class="card">
-    <strong>API base:</strong> <span id="baseUrl">http://localhost:3000</span><br>
-    <small>Caso mude, ajuste a constante API_BASE no final do arquivo.</small>
-  </div>
+      <!-- REGISTER CARD -->
+      <div class="card">
+        <h3>Criar Conta</h3>
+        <div class="form-group">
+          <input id="reg_name" placeholder="👤 Nome completo" type="text" />
+        </div>
+        <div class="form-group">
+          <input id="reg_email" placeholder="📧 Email" type="email" />
+        </div>
+        <div class="form-group">
+          <input id="reg_pass" placeholder="🔒 Senha" type="password" />
+        </div>
+        <div class="form-group">
+          <input id="reg_masterKey" placeholder="🔑 Master Key (Admin)" type="password" />
+        </div>
+        <button id="btnRegister" class="btn-primary">Registrar</button>
+        <div id="regResult" class="result"></div>
+      </div>
 
-  <!-- REGISTER -->
-  <div class="card">
-    <h3>Registrar (POST /auth/register)</h3>
-    <input id="reg_name" placeholder="Nome" />
-    <input id="reg_email" placeholder="Email" />
-    <input id="reg_pass" placeholder="Senha" type="password" />
-    <input id="reg_masterKey" placeholder="Master Key (para criar ADMIN)" type="password" />
-    <button id="btnRegister">Registrar</button>
-    <div id="regResult"></div>
-  </div>
+      <!-- LOGIN CARD -->
+      <div class="card">
+        <h3>Acessar Conta</h3>
+        <div class="form-group">
+          <input id="log_email" placeholder="📧 Email" type="email" />
+        </div>
+        <div class="form-group">
+          <input id="log_pass" placeholder="🔒 Senha" type="password" />
+        </div>
+        <button id="btnLogin" class="btn-primary">Entrar</button>
+        <div id="loginResult" class="result"></div>
+      </div>
 
-  <!-- LOGIN -->
-  <div class="card">
-    <h3>Login (POST /auth/login)</h3>
-    <input id="log_email" placeholder="Email" />
-    <input id="log_pass" placeholder="Senha" type="password" />
-    <label><input type="checkbox" id="masterMode"> Login via Master Key</label>
-    <button id="btnLogin">Login</button>
-    <div id="loginResult"></div>
-  </div>
+      <!-- TOKEN CARD - FULL WIDTH -->
+      <div class="card full-width">
+        <h3>🎫 Token Atual</h3>
+        <div id="tokenStatus" class="status-badge unauthenticated">Não autenticado</div>
+        <div class="token-box" id="tokenBox">Nenhum token disponível</div>
+        <div class="button-group">
+          <button id="btnShowUser" class="btn-secondary">Decodificar</button>
+          <button id="btnClearToken" class="btn-danger">Limpar</button>
+        </div>
+        <div id="decodedUser" class="result"></div>
+      </div>
 
-  <!-- TOKEN -->
-  <div class="card">
-    <h3>Token atual</h3>
-    <pre id="tokenBox">-- nenhum token --</pre>
+      <!-- PROTECTED ROUTES CARD - FULL WIDTH -->
+      <div class="card full-width">
+        <h3>🛡️ Rotas Protegidas</h3>
+        
+        <span class="section-label">Dados do Usuário</span>
+        <div class="button-group">
+          <button id="btnMe" class="btn-primary">Meu Perfil</button>
+          <button id="btnList" class="btn-secondary">Listar Usuários</button>
+        </div>
 
-    <div class="row">
-      <button id="btnClearToken">Limpar Token</button>
-      <button id="btnShowUser">Ver dados do Token</button>
+        <div class="divider"></div>
+
+        <span class="section-label">Gerenciar Usuário</span>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+          <input id="deleteId" placeholder="ID do usuário" type="text" style="flex: 1; min-width: 140px;" />
+          <button id="btnDelete" class="btn-danger" style="flex: 1; min-width: 140px;">Deletar</button>
+        </div>
+
+        <div id="protectedResult" class="result"></div>
+      </div>
+
     </div>
-
-    <div id="decodedUser"></div>
   </div>
-
-  <!-- PROTEGIDOS -->
-  <div class="card">
-    <h3>Rotas protegidas</h3>
-
-    <div class="row">
-      <button id="btnMe">GET /users/me</button>
-      <button id="btnList">GET /users (ADMIN)</button>
-    </div>
-
-    <div class="row" style="margin-top:12px;">
-      <input id="deleteId" placeholder="ID" />
-      <button id="btnDelete">DELETE /users/:id (ADMIN)</button>
-    </div>
-
-    <div id="protectedResult"></div>
-  </div>
-
 
   <!-- JAVASCRIPT -->
   <script>
     const API_BASE = "http://localhost:3000";
 
-    const out = (el, data) =>
-      el.innerHTML = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+    // ===== UTILITY FUNCTIONS =====
+    const out = (el, data, isSuccess = true) => {
+      el.classList.add('show', isSuccess ? 'success' : 'error');
+      if (typeof data === 'string') {
+        el.textContent = data;
+      } else {
+        el.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+      }
+    };
 
     const getToken = () => localStorage.getItem("jwt_token");
+    
     const setToken = (t) => {
-      t ? localStorage.setItem("jwt_token", t) : localStorage.removeItem("jwt_token");
-      document.getElementById("tokenBox").textContent = t || "-- nenhum token --";
+      if (t) {
+        localStorage.setItem("jwt_token", t);
+        document.getElementById("tokenBox").textContent = t;
+        document.getElementById("tokenBox").classList.add('active');
+        document.getElementById("tokenStatus").textContent = "✅ Autenticado";
+        document.getElementById("tokenStatus").classList.remove('unauthenticated');
+        document.getElementById("tokenStatus").classList.add('authenticated');
+      } else {
+        localStorage.removeItem("jwt_token");
+        document.getElementById("tokenBox").textContent = "Nenhum token disponível";
+        document.getElementById("tokenBox").classList.remove('active');
+        document.getElementById("tokenStatus").textContent = "❌ Não autenticado";
+        document.getElementById("tokenStatus").classList.add('unauthenticated');
+        document.getElementById("tokenStatus").classList.remove('authenticated');
+      }
     };
 
     const headers = () => ({
@@ -177,33 +561,40 @@
       ...(getToken() ? { "Authorization": "Bearer " + getToken() } : {})
     });
 
-    // REGISTER
+    // ===== EVENT LISTENERS =====
     document.getElementById("btnRegister").onclick = async () => {
+      const resultEl = document.getElementById("regResult");
+      resultEl.classList.remove('show', 'success', 'error');
+      
       const body = {
-        name: reg_name.value,
-        email: reg_email.value,
-        password: reg_pass.value,
-        masterKey: reg_masterKey.value || undefined
+        name: document.getElementById("reg_name").value,
+        email: document.getElementById("reg_email").value,
+        password: document.getElementById("reg_pass").value,
+        masterKey: document.getElementById("reg_masterKey").value || undefined
       };
+
       try {
         const res = await fetch(API_BASE + "/auth/register", {
           method: "POST",
           headers: headers(),
           body: JSON.stringify(body)
         });
-        out(regResult, await res.json());
+        const json = await res.json();
+        out(resultEl, json, res.ok);
       } catch (e) {
-        out(regResult, e.toString());
+        out(resultEl, "Erro: " + e.message, false);
       }
     };
 
-    // LOGIN
     document.getElementById("btnLogin").onclick = async () => {
+      const resultEl = document.getElementById("loginResult");
+      resultEl.classList.remove('show', 'success', 'error');
+      
       const body = {
-        email: log_email.value,
-        password: log_pass.value,
-        ...(masterMode.checked ? { mode: "master" } : {})
+        email: document.getElementById("log_email").value,
+        password: document.getElementById("log_pass").value
       };
+
       try {
         const res = await fetch(API_BASE + "/auth/login", {
           method: "POST",
@@ -212,53 +603,85 @@
         });
         const json = await res.json();
         if (json.token) setToken(json.token);
-        out(loginResult, json);
+        out(resultEl, json, res.ok);
       } catch (e) {
-        out(loginResult, e.toString());
+        out(resultEl, "Erro: " + e.message, false);
       }
     };
 
-    // CLEAR TOKEN
     document.getElementById("btnClearToken").onclick = () => {
       setToken(null);
-      decodedUser.textContent = "";
+      document.getElementById("decodedUser").classList.remove('show');
+      document.getElementById("decodedUser").textContent = "";
     };
 
-    // SHOW TOKEN USER
     document.getElementById("btnShowUser").onclick = () => {
       const t = getToken();
-      if (!t) return alert("Sem token salvo");
+      const resultEl = document.getElementById("decodedUser");
+      resultEl.classList.remove('show', 'success', 'error');
+      
+      if (!t) {
+        out(resultEl, "⚠️ Nenhum token salvo", false);
+        return;
+      }
+      
       try {
         const decoded = JSON.parse(atob(t.split(".")[1]));
-        out(decodedUser, decoded);
+        out(resultEl, decoded, true);
       } catch {
-        out(decodedUser, "Token inválido");
+        out(resultEl, "❌ Token inválido ou mal formatado", false);
       }
     };
 
-    // ME
     document.getElementById("btnMe").onclick = async () => {
-      const res = await fetch(API_BASE + "/users/me", { headers: headers() });
-      out(protectedResult, await res.json());
+      const resultEl = document.getElementById("protectedResult");
+      resultEl.classList.remove('show', 'success', 'error');
+      
+      try {
+        const res = await fetch(API_BASE + "/users/me", { headers: headers() });
+        const json = await res.json();
+        out(resultEl, json, res.ok);
+      } catch (e) {
+        out(resultEl, "Erro: " + e.message, false);
+      }
     };
 
-    // LIST USERS (ADMIN)
     document.getElementById("btnList").onclick = async () => {
-      const res = await fetch(API_BASE + "/users", { headers: headers() });
-      out(protectedResult, await res.json());
+      const resultEl = document.getElementById("protectedResult");
+      resultEl.classList.remove('show', 'success', 'error');
+      
+      try {
+        const res = await fetch(API_BASE + "/users", { headers: headers() });
+        const json = await res.json();
+        out(resultEl, json, res.ok);
+      } catch (e) {
+        out(resultEl, "Erro: " + e.message, false);
+      }
     };
 
-    // DELETE USER
     document.getElementById("btnDelete").onclick = async () => {
-      const id = deleteId.value;
-      const res = await fetch(API_BASE + "/users/" + id, {
-        method: "DELETE",
-        headers: headers()
-      });
-      out(protectedResult, await res.json());
+      const resultEl = document.getElementById("protectedResult");
+      resultEl.classList.remove('show', 'success', 'error');
+      
+      const id = document.getElementById("deleteId").value;
+      if (!id) {
+        out(resultEl, "⚠️ Digite um ID válido", false);
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE + "/users/" + id, {
+          method: "DELETE",
+          headers: headers()
+        });
+        const json = await res.json();
+        out(resultEl, json, res.ok);
+      } catch (e) {
+        out(resultEl, "Erro: " + e.message, false);
+      }
     };
 
-    // inicializar token
+    // Initialize token
     setToken(getToken());
   </script>
 
