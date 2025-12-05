@@ -1,13 +1,12 @@
+// src/middlewares/auth.ts
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret";
+import { authFacade } from "../facades/AuthFacade";
 
 export interface AuthRequest extends Request {
   user?: any;
 }
 
-export function ensureAuth(req: AuthRequest, res: Response, next: NextFunction) {
+export async function ensureAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: "Token não fornecido" });
 
@@ -18,8 +17,11 @@ export function ensureAuth(req: AuthRequest, res: Response, next: NextFunction) 
 
   const token = parts[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    const user = await authFacade.validateToken(token);
+    if (!user) {
+      return res.status(401).json({ error: "Token inválido ou expirado" });
+    }
+    req.user = user; // user completo via UserService
     return next();
   } catch (err) {
     return res.status(401).json({ error: "Token inválido ou expirado" });

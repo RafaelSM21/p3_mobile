@@ -1,6 +1,6 @@
+// src/routes/auth.ts
 import { Router } from "express";
-import { authService } from "../services/auth.service";
-import { MasterKeyStrategy } from "../strategies/auth/MasterKeyStrategy"; // mantenha o caminho que você usa
+import { authFacade } from "../facades/AuthFacade";
 
 const router = Router();
 
@@ -9,18 +9,11 @@ router.post("/login", async (req, res) => {
   const { email, password, mode } = req.body;
 
   try {
-    if (mode === "master") {
-      authService.setStrategy(new MasterKeyStrategy());
-    }
-
-    const result = await authService.login(email, password);
-
-    // volta para padrão
-    authService.setStrategy(null);
-
-    res.json(result);
+    const result = await authFacade.login(email, password, mode);
+    // result deve ser { token, user } conforme suas strategies atuais
+    return res.json(result);
   } catch (err: any) {
-    res.status(401).json({ error: err.message });
+    return res.status(401).json({ error: err.message ?? "Unauthorized" });
   }
 });
 
@@ -43,7 +36,7 @@ router.post("/register", async (req, res) => {
       }
     }
 
-    const user = await authService.register(name.trim(), email.trim().toLowerCase(), password, role);
+    const user = await authFacade.register(name.trim(), email.trim().toLowerCase(), password, role);
 
     // não retornar senha no response
     const { password: _, ...safe } = user as any;

@@ -50,21 +50,131 @@ projeto/
 
 -----
 
-## 🔒 Autenticação e Design Patterns
+## 🔒 Design Patterns
 
-O diferencial deste projeto é a aplicação do **Strategy Pattern** no fluxo de login. Isso permite que a API suporte diferentes mecanismos de entrada sem alterar a lógica principal do serviço.
+### Singleton
 
-### 🔑 Estratégias Implementadas
+```bash
+import "dotenv/config";
+import { PrismaClient } from "@prisma/client";
 
-1.  **EmailPasswordStrategy (Padrão):**
+class PrismaSingleton {
+  private static instance: PrismaClient;
 
-      * Valida credenciais tradicionais (email e senha com hash).
-      * Fluxo comum para usuários finais.
+  private constructor() {}
 
-2.  **MasterKeyStrategy (Admin):**
+  public static getInstance(): PrismaClient {
+    if (!PrismaSingleton.instance) {
+      PrismaSingleton.instance = new PrismaClient();
+    }
+    return PrismaSingleton.instance;
+  }
+}
 
-      * Autenticação via `MASTER_KEY` definida no servidor.
-      * Ideal para *bootstrapping* do sistema ou criação do primeiro superusuário (ADMIN).
+export const prisma = PrismaSingleton.getInstance();
+```
+Usado para garantir uma única intância do Prisma Client  em toda a aplicação, evitando multiplas conexões com o banco
+
+### Strategy
+
+```bash
+export class EmailPasswordStrategy implements AuthStrategy {
+  async authenticate(email: string, password: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) throw new Error("Invalid credentials");
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) throw new Error("Invalid credentials");
+
+    const payload = { id: user.id, email: user.email, role: user.role };
+    
+    const token = jwt.sign(payload, JWT_SECRET, { 
+      expiresIn: JWT_EXPIRES_IN as SignOptions["expiresIn"] 
+    });
+
+    const { password: _, ...safeUser } = user as any;
+    return { token, user: safeUser };
+  }
+}
+```
+
+Usado para permitir mais de um modo de login (Com ou sem a Master Key)
+
+### Facade
+
+```bash
+import jwt from "jsonwebtoken";
+import { AuthService } from "../services/auth.service";
+import { UserService } from "../services/user.service";
+import { AuthStrategy } from "../strategies/auth/AuthStrategy";
+import { EmailPasswordStrategy } from "../strategies/auth/EmailPasswordStrategy";
+import { MasterKeyStrategy } from "../strategies/auth/MasterKeyStrategy";
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev_secret";
+
+export class AuthFacade {
+  private authService: AuthService;
+  private userService: UserService;
+  private strategies: Record<string, AuthStrategy>;
+
+  constructor(
+    authService: AuthService,
+    userService: UserService,
+    strategies: Record<string, AuthStrategy>
+  ) {
+    this.authService = authService;
+    this.userService = userService;
+    this.strategies = strategies;
+  }
+
+  async login(email: string, password: string, mode?: string) {
+    if (mode === "master") {
+      return this.strategies.master.authenticate(email, password);
+    }
+    return this.strategies.email.authenticate(email, password);
+  }
+
+  async register(name: string, email: string, password: string, role = "USER") {
+    return this.authService.register(name, email, password, role);
+  }
+
+  async validateToken(token: string) {
+    try {
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      // Alguns tokens usam 'id' ou 'sub' (aqui assumimos 'id')
+      const id = decoded?.id ?? decoded?.sub;
+      if (!id) return null;
+      // userService.getUser espera number; tente converter se precisar
+      const numericId = typeof id === "string" ? parseInt(id, 10) : id;
+      const user = await this.userService.getUser(numericId);
+      return user ?? null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  async ensureRole(userId: number | string, role: string) {
+    const numericId = typeof userId === "string" ? parseInt(userId, 10) : userId;
+    const user = await this.userService.getUser(numericId);
+    return user?.role === role;
+  }
+
+  static createDefault() {
+    const authService = new AuthService();
+    const userService = new UserService();
+    const strategies: Record<string, AuthStrategy> = {
+      email: new EmailPasswordStrategy(),
+      master: new MasterKeyStrategy()
+    };
+    return new AuthFacade(authService, userService, strategies);
+  }
+}
+
+export const authFacade = AuthFacade.createDefault();
+
+```
+
+O Facade centraliza a orquestração entre services e strategies, expondo uma API simples (login, register, validateToken) para routes e middlewares. Isso reduz acoplamento e facilita manutenção/testes: trocar uma strategy ou ajustar geração de token é feito apenas no Facade.
 
 -----
 
@@ -142,24 +252,6 @@ Abaixo, a lista das principais rotas disponíveis.
 
 -----
 
-## 💾 Modelo de Dados (Prisma)
-
-O schema é enxuto, utilizando Enums ou Strings para controle de acesso.
-
-```prisma
-model User {
-  id        Int     @id @default(autoincrement())
-  name      String
-  email     String  @unique
-  password  String
-  role      String  @default("USER") // ou 'ADMIN'
-
-  @@map("users")
-}
-```
-
------
-
 ## 🧪 Testes
 
 Os testes garantem a integridade da lógica de autenticação e das estratégias.
@@ -169,4 +261,23 @@ Os testes garantem a integridade da lógica de autenticação e das estratégias
 npm test
 ```
 
+Deve retornar:
+```bash
+> projeto@1.0.0 test
+> jest
+
+ PASS  __tests__/auth.test.ts (10.56 s)
+  AUTH - E2E
+    √ POST /auth/register deve registrar um usuário (679 ms)
+    √ POST /auth/login deve retornar token (após registrar) (327 ms)
+    √ POST /auth/login deve falhar com senha errada (337 ms)
+    √ GET /users/me deve devolver usuário autenticado (332 ms)
+    √ GET /users/me sem token retorna 401 (9 ms)
+    √ GET /users (list) — permite 200 (lista) ou 403 (proibido) dependendo da política (324 ms)
+
+    Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        11.155 s
+```
 -----
