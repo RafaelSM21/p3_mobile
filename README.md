@@ -45,7 +45,7 @@ projeto/
 
 ---
 
-# 🔒 Design Patterns usados (resumo + trecho)
+# 🔒 Design Patterns usados
 
 ## Singleton (Prisma client)
 
